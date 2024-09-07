@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: seimas
+    tables:
+      - name: seimo___kadencijos
+
+models:
+  - name: my_first_dbt_model
+    description: "A starter dbt model"
+    # columns:
+      # - name: id
+      #   description: "The primary key for this table"
+      #   data_tests:
+      #     - unique
+      #     - not_null
