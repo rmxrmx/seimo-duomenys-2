@@ -7,12 +7,8 @@
     Try changing "table" to "view" below
 */
 
-{{ config(materialized='table') }}
-
-
-
 select *
-from {{source("seimas", "seimo___kadencijos")}}
+from {{ source('seimas', 'balsavimai') }}
 
 /*
     Uncomment the line below to remove records with null `id` values

@@ -2,15 +2,16 @@ version: 2
 
 sources:
   - name: seimas
+    schema: seimas_raw
     tables:
-      - name: seimo___kadencijos
+      - name: balsavimai
+      - name: kadencijos
+      - name: balsavimai__individualiai
+      - name: seimo_nariai
 
 models:
-  - name: my_first_dbt_model
-    description: "A starter dbt model"
-    # columns:
-      # - name: id
-      #   description: "The primary key for this table"
-      #   data_tests:
-      #     - unique
-      #     - not_null
+  - name: seimas
+    schema: seimas_dbt
+    tables:
+    - name: balsavimai_individ
+    - name: seimo_nariai
