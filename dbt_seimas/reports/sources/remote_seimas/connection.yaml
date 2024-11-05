@@ -1,0 +1,5 @@
+# This file was automatically generated
+name: remote_seimas
+type: motherduck
+options:
+  database: remote_seimas

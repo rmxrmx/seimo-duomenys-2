@@ -158,24 +158,20 @@ def seimas_source(start_step: int, end_step: int = 10, balsai_nuo: str = "1970-0
 if __name__ == "__main__":
     pipeline = dlt.pipeline(
         pipeline_name="seimo_duomenys",
-        destination=dlt.destinations.duckdb(
-            "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
-        ),
+        destination="motherduck",
         dataset_name="seimas_raw",
         progress="tqdm",
     )
 
-    con = duckdb.connect("dbt_seimas/reports/sources/main_db/main_db.duckdb")
-    data_nuo = con.sql("SELECT MAX(aprad_ia) FROM seimas_raw.posedziai;").fetchone()[0]
-    con.close()
-    load_info = pipeline.run(seimas_source(0, 5, str(data_nuo)))
+    # con = duckdb.connect("dbt_seimas/reports/sources/main_db/main_db.duckdb")
+    # data_nuo = con.sql("SELECT MAX(aprad_ia) FROM seimas_raw.posedziai;").fetchone()[0]
+    # con.close()
+    load_info = pipeline.run(seimas_source(0, 5, "2025-01-01"))
     print(load_info)
 
     pipeline = dlt.pipeline(
         pipeline_name="seimo_duomenys",
-        destination=dlt.destinations.duckdb(
-            "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
-        ),
+        destination="motherduck",
         dataset_name="seimas_dbt",
         progress="tqdm",
     )
