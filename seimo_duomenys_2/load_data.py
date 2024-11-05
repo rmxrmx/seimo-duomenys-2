@@ -1,6 +1,7 @@
 import dlt
 from dlt.sources.helpers import requests
 import xmltodict
+import duckdb
 import json
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -90,7 +91,7 @@ def balsavimai(data_nuo: str):
     for posedis in posedziai():
         posedzio_id = posedis["@posėdžio_id"]
         posedzio_pradzia = posedis["@pradžia"]
-        if data_nuo > posedzio_pradzia:
+        if data_nuo >= posedzio_pradzia:
             continue
         posedzio_eiga_xml = requests.get(
             "http://apps.lrs.lt/sip/p2b.ad_seimo_posedzio_eiga_full?posedzio_id="
@@ -154,43 +155,46 @@ def seimas_source(start_step: int, end_step: int = 10, balsai_nuo: str = "1970-0
     return resources[start_step:end_step]
 
 
-pipeline = dlt.pipeline(
-    pipeline_name="seimo_duomenys",
-    destination=dlt.destinations.duckdb(
-        "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
-    ),
-    dataset_name="seimas_raw",
-    progress="tqdm",
-)
-
-# TODO: have real value for update
-# load_info = pipeline.run(seimas_source(0, 5, "2024-01-01"))
-# print(load_info)
-
-pipeline = dlt.pipeline(
-    pipeline_name="seimo_duomenys",
-    destination=dlt.destinations.duckdb(
-        "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
-    ),
-    dataset_name="seimas_dbt",
-    progress="tqdm",
-)
-
-# Get runner
-dbt = dlt.dbt.package(
-    pipeline,
-    "./dbt_seimas/",
-)
-
-# Run the models and collect any info
-# If running fails, the error will be raised with a full stack trace
-models = dbt.run_all()
-
-# On success, print the outcome
-for m in list(models):
-    print(
-        f"Model {m.model_name} materialized"
-        + f" in {round(m.time,2)}s"
-        + f" with status {m.status}"
-        + f" and message {m.message}"
+if __name__ == "__main__":
+    pipeline = dlt.pipeline(
+        pipeline_name="seimo_duomenys",
+        destination=dlt.destinations.duckdb(
+            "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
+        ),
+        dataset_name="seimas_raw",
+        progress="tqdm",
     )
+
+    con = duckdb.connect("dbt_seimas/reports/sources/main_db/main_db.duckdb")
+    data_nuo = con.sql("SELECT MAX(aprad_ia) FROM seimas_raw.posedziai;").fetchone()[0]
+    con.close()
+    load_info = pipeline.run(seimas_source(0, 5, str(data_nuo)))
+    print(load_info)
+
+    pipeline = dlt.pipeline(
+        pipeline_name="seimo_duomenys",
+        destination=dlt.destinations.duckdb(
+            "./dbt_seimas/reports/sources/main_db/main_db.duckdb"
+        ),
+        dataset_name="seimas_dbt",
+        progress="tqdm",
+    )
+
+    # Get runner
+    dbt = dlt.dbt.package(
+        pipeline,
+        "./dbt_seimas/",
+    )
+
+    # Run the models and collect any info
+    # If running fails, the error will be raised with a full stack trace
+    models = dbt.run_all()
+
+    # On success, print the outcome
+    for m in list(models):
+        print(
+            f"Model {m.model_name} materialized"
+            + f" in {round(m.time,2)}s"
+            + f" with status {m.status}"
+            + f" and message {m.message}"
+        )
