@@ -1,11 +1,6 @@
 ---
-title: Welcome to Evidence
+title: Seimo Duomenys
 ---
-
-<Details title='How to edit this page'>
-
-  This page can be found in your project at `/pages/index.md`. Make a change to the markdown file and save it to see the change take effect in your browser.
-</Details>
 
 ```sql seimo_narys
  select id, vardas
@@ -15,20 +10,45 @@ title: Welcome to Evidence
 
 <Dropdown
   data={seimo_narys}
-  name=seimo_narys
+  name=seimo_nario_vardas
   value=vardas 
   title="Pasirinkite seimo narį" 
-  defaultValue="Agnė Biliotaitė">
+  defaultValue="Agnė Bilotaitė">
 </Dropdown>
 
+```sql balsavimai
+select *
+from main_db.bals_individ
+where seimo_narys = '${inputs.seimo_nario_vardas.value}'
+order by abalsavimo_laikas desc
+```
+
+<DataTable data={balsavimai} rows=15 search=true>
+  <Column id=kaip_balsavo title="Balsas" contentType=colorscale scaleColumn=bals_int scaleColor={['#CA7373','#D7B26D','#3C552D']} colorMid=0/>
+  <Column id=klausimu_grupes title="Klausimas" wrap=true/>
+  <Column id=balsuota_del title="Balsuota dėl" wrap=true/>
+  <Column id=rezultatas title="Rezultatas"/>
+  <Column id=abalsavimo_laikas title="Data"/>
+</DataTable>
 balsavimai:
 balsavimo pavadinimas, kaip balsavo, data, rezultatas, kaip balsavo frakcijos
-## What's Next?
-- [Connect your data sources](settings)
-- Edit/add markdown files in the `pages` folder
-- Deploy your project with [Evidence Cloud](https://evidence.dev/cloud)
 
-## Get Support
-- Message us on [Slack](https://slack.evidence.dev/)
-- Read the [Docs](https://docs.evidence.dev/)
-- Open an issue on [Github](https://github.com/evidence-dev/evidence)
+```sql balsavimai_pie
+select seimo_narys, COALESCE(kaip_balsavo, 'Nebalsavo') AS kaip_balsavo, count(*) / sum(count(*)) over() AS bals_pct
+from main_db.bals_individ
+where seimo_narys = '${inputs.seimo_nario_vardas.value}'
+group by seimo_narys, kaip_balsavo
+union
+select 'Vidurkis' AS seimo_narys, COALESCE(kaip_balsavo, 'Nebalsavo'), count(*) / sum(count(*)) over() AS bals_pct
+from main_db.bals_individ
+group by kaip_balsavo
+```
+
+<BarChart 
+    data={balsavimai_pie}
+    x=seimo_narys
+    y=bals_pct
+    series=kaip_balsavo
+    swapXY=false
+    yFmt=pct
+/>
