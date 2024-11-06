@@ -17,6 +17,7 @@ dlt = {extras = ["motherduck"], version = "^1.3.0"}
 dbt-duckdb = "1.8.1"
 tqdm = "^4.66.5"
 line-profiler = "^4.1.3"
+python-dotenv = "^1.0.1"
 
 
 [build-system]

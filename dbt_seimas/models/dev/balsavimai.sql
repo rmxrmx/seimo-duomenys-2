@@ -1,17 +1,21 @@
 
-/*
-    Welcome to your first dbt model!
-    Did you know that you can also configure models directly within SQL files?
-    This will override configurations stated in dbt_project.yml
+select
+    posedzio_id,
+    stadija,
+    klausimu_grupes,
+    abals_id AS bals_id,
+    nuo,
+    iki,
+    aprasas,
+    antraste,
+    uzdaras,
+    bendru_sutarimu,
+    abalsavimo_laikas AS balsavimo_laikas,
+    abalsavo AS balsavo,
+    aviso AS viso,
+    aux AS uz,
+    apriex AS pries,
+    asusilaikx AS susilaike,
+    "_dlt_id" AS dlt_id
 
-    Try changing "table" to "view" below
-*/
-
-select *
 from {{ source('seimas', 'balsavimai') }}
-
-/*
-    Uncomment the line below to remove records with null `id` values
-*/
-
--- where id is not null

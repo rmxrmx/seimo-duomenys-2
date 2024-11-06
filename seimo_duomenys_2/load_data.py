@@ -1,13 +1,10 @@
+import os
+from xml.parsers.expat import ExpatError
 import dlt
 from dlt.sources.helpers import requests
 import xmltodict
 import duckdb
-import json
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
-import line_profiler
-import logging
-import http.client
+from dotenv import load_dotenv
 
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36"
@@ -35,8 +32,9 @@ def sesijos():
         "SeimoKadencija"
     ]
     for kadencija in sesijos_su_kadencijomis:
-        for sesija in kadencija["SeimoSesija"]:
-            yield {"kadencijos_id": kadencija["@kadencijos_id"]} | sesija
+        if "SeimoSesija" in kadencija:
+            for sesija in kadencija["SeimoSesija"]:
+                yield {"kadencijos_id": kadencija["@kadencijos_id"]} | sesija
 
 
 @dlt.resource(name="seimo_nariai", write_disposition="replace")
@@ -48,11 +46,14 @@ def seimo_nariai():
             + str(kadencijos_id),
             headers=headers,
         )
-        nariai = xmltodict.parse(nariai_xml.content)["SeimoInformacija"][
-            "SeimoKadencija"
-        ]["SeimoNarys"]
-        for narys in nariai:
-            yield {"kadencijos_id": kadencijos_id} | narys
+        try:
+            nariai = xmltodict.parse(nariai_xml.content)["SeimoInformacija"][
+                "SeimoKadencija"
+            ]["SeimoNarys"]
+            for narys in nariai:
+                yield {"kadencijos_id": kadencijos_id} | narys
+        except ExpatError:
+            print(f"seimo_nariai extract failed with kadencija {kadencijos_id}")
 
 
 # TODO: limit by time
@@ -156,6 +157,7 @@ def seimas_source(start_step: int, end_step: int = 10, balsai_nuo: str = "1970-0
 
 
 if __name__ == "__main__":
+    load_dotenv()
     pipeline = dlt.pipeline(
         pipeline_name="seimo_duomenys",
         destination="motherduck",
@@ -163,10 +165,12 @@ if __name__ == "__main__":
         progress="tqdm",
     )
 
-    # con = duckdb.connect("dbt_seimas/reports/sources/main_db/main_db.duckdb")
-    # data_nuo = con.sql("SELECT MAX(aprad_ia) FROM seimas_raw.posedziai;").fetchone()[0]
-    # con.close()
-    load_info = pipeline.run(seimas_source(0, 5, "2025-01-01"))
+    con = duckdb.connect(
+        f"md:remote_seimas?motherduck_token={os.getenv("MOTHERDUCK_API")}"
+    )
+    data_nuo = con.sql("SELECT MAX(aprad_ia) FROM seimas_raw.posedziai;").fetchone()[0]
+    con.close()
+    load_info = pipeline.run(seimas_source(0, 5, str(data_nuo)))
     print(load_info)
 
     pipeline = dlt.pipeline(
