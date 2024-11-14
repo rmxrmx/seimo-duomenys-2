@@ -33,11 +33,16 @@ def sesijos():
     ]
     for kadencija in sesijos_su_kadencijomis:
         if "SeimoSesija" in kadencija:
-            for sesija in kadencija["SeimoSesija"]:
-                yield {"kadencijos_id": kadencija["@kadencijos_id"]} | sesija
+            if isinstance(kadencija["SeimoSesija"], list):
+                for sesija in kadencija["SeimoSesija"]:
+                    yield {"kadencijos_id": kadencija["@kadencijos_id"]} | sesija
+            else:
+                yield {"kadencijos_id": kadencija["@kadencijos_id"]} | kadencija[
+                    "SeimoSesija"
+                ]
 
 
-@dlt.resource(name="seimo_nariai", write_disposition="replace")
+@dlt.resource(name="seimo_nariai", primary_key="aasmens_id", write_disposition="merge")
 def seimo_nariai():
     for kadencija in kadencijos():
         kadencijos_id = kadencija["@kadencijos_id"]

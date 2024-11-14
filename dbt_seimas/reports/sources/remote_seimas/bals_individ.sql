@@ -9,7 +9,8 @@ CASE
     WHEN b.aprasas LIKE '%Nepritarta%' THEN 'Nepritarta'
     WHEN b.aprasas LIKE '%Pritarta%' THEN 'Pritarta'
     ELSE 'Kita'
-END AS rezultatas
+END AS rezultatas,
+b.bals_id AS balsavimo_id
 FROM seimas_dbt.balsavimai_individ i
 LEFT JOIN seimas_dbt.balsavimai b
 ON i.dlt_parent_id = b.dlt_id;
