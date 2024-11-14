@@ -19,7 +19,8 @@ select 'Visos' as pavadinimas, make_date(1970, 01, 01) AS data_nuo, today()+1 AS
     name=kadencija
     value=pavadinimas
     title="Pasirinkite kadenciją"
-    defaultValue="Visos">
+    defaultValue="Visos"
+    emptySet=warn>
   </Dropdown>
 
   ```sql balsavimai
@@ -39,7 +40,7 @@ select 'Visos' as pavadinimas, make_date(1970, 01, 01) AS data_nuo, today()+1 AS
   order by balsavimo_laikas desc
   ```
 
-  <DataTable data={balsavimai} rows=15 search=true>
+  <DataTable data={balsavimai} rows=15 search=true emptySet=warn>
     <Column id=kaip_balsavo title="Balsas" contentType=colorscale scaleColumn=bals_int scaleColor={['#CA7373','#D7B26D','#3C552D']} colorMid=0/>
     <Column id=klausimu_grupes title="Klausimas" wrap=true/>
     <Column id=balsuota_del title="Aprašas" wrap=true/>
